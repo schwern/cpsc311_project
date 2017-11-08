@@ -1,0 +1,30 @@
+Project type, explain its value (why is language important -> industrial or research impact/everyday programming practice)
+Relate topic to its context (-> other (systems) programming languages)
+Technical elements of project topic contributing to importance (--> stuff like ownership, enums, etc.)
+High-level description of a project on this topic for 100% goal (-> how we plan to implement coreutil)
+
+Own! description of a topic and its value
+Base description on existing work
+
+
+Questions:
+ - which coreutil?
+ - proposal?
+ - let him know about Ambi
+ - also show bad experiences/disadvantages of Rust?
+ - application of Enums etc?
+ - textbook is a valid reference?, Why Rust? also?
+ - Abstract, ..., conclusion? necessary as layout
+ 
+ 
+ Submission format
+ Professional Writing (clear, concise, easy to skim)
+ Proper citation
+ Clear overview of project topic
+ value/importance/impact of project topic
+ context of project topic
+	- typical errors in C/C++ code:
+ technical aspects of project topic
+ potential project
+ 
+ sort : concurrency / implement different variants -> use traits

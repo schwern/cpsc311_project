@@ -1,0 +1,343 @@
+Rustbyexample + Rust book
+
+
+https://doc.rust-lang.org/1.0.0/book/README.html
+
+Cargo helps managing
+ - building your code
+ - downloading the dependencies your code needs
+ - building those dependencies
+ 
+Cargo-ify a project:
+ - make cargo config file -> TOML file
+ - put source file in the right place -> src folder
+ - Cargo expects source files to live in a src directory
+ - top level for other things, not related to code
+ - create TOML file 
+	- TOML: aims to be minimal configuration file format, easy to read
+	- designed to map unambiguously to a hash table
+	- should be easy to parse into data structures in a wide variety of languages
+ - build project and run with: $ cargo run
+	- new file created: Cargo.lock
+		- keeping track of dependencies in your application
+ - start new project with Cargo: $ cargo new hello_world -- bin
+ 
+ main function: beginning of every Rust program
+ indentation with four spaces rather than tabs
+ macros really different from C macros
+ Rust: expression oriented language: most things expressions rather than statements
+   -> expression which returns a value -> also true for functions, the last expr automatically returned
+ 
+ use std::io
+  - import io library from the standard library
+ empty tuple () -> return type of main fn
+ 
+ let:
+  - used to create var bindings
+  - var bindings: immutable by default
+  - keyword mut: makes a binding mutable rather than immutable
+  - accepts "pattern" on left-hand side
+  
+ String: growable, UTF-8 encoded bit of text
+ ::new()- "associated function" of a particular type
+  - associated with String itself rather than a particular instance of a string
+  ~ static method
+  - new() -> creates new empty instance of some type
+  
+ io::stdin() -> calling associated function on imported package
+ 
+ Methods: like associated functions but only available on a particular instance of a type
+ 
+ Result type:
+  encode error handling information
+  different methods defined on them
+  use returned result type for error handling
+ 
+crate: package of Rust code
+"dependencies" section of Cargo.toml -> like the "package" section 
+ - declaring dependies on external version + version you require
+traits: methods defined on traits, for the method to work -> needs the trait to be in scope
+.cmp() method -  called on anything that can be compared + takes reference to the thing you want to compare it to
+:: used for indicating namespace for a particular enum variant
+  
+Rust: strong, static type system + type inference
+
+.ok().expect("error message") for error handling
+allowed to shadow variable e.g. when conversion of the value of a var
+ -> re-use variable name
+variable: t -> annotate type of the var
+loop : infinite loop (end with break)
+
+error handling by using match statement
+	Result returned -> Enum, each variant some data associated with it
+	
+working with a type which owns its data easier than working with one that uses references
+
+struct -> representing an entity type
+<impl> block -> define things like associated functions  on the struct
+
+structure of function: 
+	fn name(param: type, ...) -> return_type { ...}
+
+Vec<T> : vector, growable array type
+methods taking explicit self parameter 
+    -> new() associated function because has no self
+	-> eat() method -> because takes self
+
+use: brings names into scope
+	
+Concurrency in Rust
+  - making new threads -> return some handles to those threads that let us control their operation
+	-> need to explicitly annotate type 
+  - calling into_iter() on vector -> iterator that takes ownership of each philosopher
+  - call map on iterator -> takes closure as an argument and calls that closure on each elem in turn
+  - thread::spawn(...) -> takes a closure as an argument and executes that closure in a new thread
+		- need extra annotation, move, to indicate that the closure is going to take ownership of the values it's capturing
+  - mutex: way to control concurrency : only on thread can access the contents at once
+  _var-name -> telling Rust that result value just has to be acquired and not used -> no warning
+
+ 
+The Stack and the Heap
+	- stack: very fast, memory allocated there by default; but allocation local to a function call, limited in size
+	- heap: slower, explicitly allocated by program, effectively unlimited in size, globally accessible
+	
+	The Stack
+		- stack allocate by default i.e. basic values on the stack
+			- function called -> memory allocation for all of its local variables and other information -> "stack frame"
+			- function returns -> stack frame deallocated
+			-> really fast but cannot keep values around if needed for longer than a single function
+			edition 2.0
+			- LIFO stack
+			- fast because memory access always from the top + all data on stack must take up a known, fixed size
+			
+	The Heap
+		- allocate memory on heap with Box<T> type
+			- actual value of box: structure which has a pointer to the heap 
+				-> allocate memory for the heap and put value there
+			- jemalloc : memory allocator for heap
+			- function over -> Drop implementation for Box<T> -> deallocates memory that was allocated when it was created
+				-> then stack frame goes away, freeing all memory
+			- make memory live longer by transferring ownership
+			from edition 2.0
+			- for data with size unknown at compile time or a size that might change
+			- less organized: OS finds empty spot big enough for data, marks it as being in use and returns pointer -> allocating memory
+				-> pointer stored on the stack (fixed size)
+			
+	Arguments and borrowing
+		- stack frames not only for local bindings but also arguments
+		- value of a reference: pointer to a memory location -> borrowing a variable not deallocatign any memory
+	
+	Rust compared to other languages
+		- most with garbage collection -> heap allocating by default i.e. every value boxed
+		- Stack-allocation : only LIFO semantics for reclaiming storage
+		- heap-allocation: allowing storage to be taken from and returned to the pool in arbitrary order, at a complexity cost
+	Default stack allocation in Rust
+		- Runtime efficiency: 
+			- memory management with stack: trivial
+		- semantic impact:
+			- LIFO semantics
+		
+
+ 
+ https://doc.rust-lang.org/book/second-edition/ch03-00-common-programming-concepts.html
+ 
+ Common Programming Concepts
+ 
+	Variables and Mutability
+	- variables immutable by default -> advantage of safety and easy concurrency
+	- compile time errors when trying to change an immutable variable 
+	- keyword "mut" in front of variable name -> mutable
+	- big data structures -> maybe better to mutate, smaller data structure -> maybe no mutation but clarity
+	- "const" keyword for constants, type of the value must be annotated, can only be set to constant expressions
+	- constants valid for the entire runtime of a program within their scope
+	- use of hardcoded values -> maintenance, only one place to change
+	- Shadowing
+		- declare new variable with same name as previous variable 
+		-> by using the same variable name and repeating the use of "let"
+		!= mutation
+		- lets us use the same var name but with different type
+	
+	Data Types
+	- Rust: statically typed (must know the types of all variables at compile time)
+	- normally can infer types but then not possible, type annotation necessary
+	- Scalar types: representing single values
+		- integers
+		- floating-point numbers
+		- booleans 
+		- characters
+		- i : signed, u : unsigned
+	- Compound Types: group multiple values of other types into one type, two primitive compound types:
+		- tuple : general way of grouping some number of other values with a variety of types into one compound type
+			- use patttern matching to destructure tuple var -> get individual values of a tuple
+			- or access by indexing
+		- arrays: every elem with same type
+			- fixed length
+			- data allocated on stack
+			- trying to access an index past the end of the array -> runtime error (Rust panics) because Rust checks if index < length 
+				-> no invalid memory can be accessed
+				-> immediately exiting -> memory safety ensured
+	
+	Functions
+	- snake case: all letters are lowercase and underscores separate words
+	- "fn" keyword for functions
+	- must declare the type of each param in function signatures
+	- statements: instructions that perform some action and do not return a value
+		e.g. assigning a value with the let keyword e.g. let x = (let y = 6) not possible because let not returning value -> no value x can be bound to
+	- expression: evaluate to a resulting value
+	- add semicolon to end of expression -> statement
+	- return value = value with the final expression in the block of the body of the function
+	
+	Control Flow
+	- always boolean in condition
+	- multiple conditions with else if possible -> maybe match would be more appropriate
+	- 3 kinds of loops: loop, while, for
+		- loop: infinite loop, has to be stopped explicitly with break
+		- for e in array { ... } or for n in (1...x) { ... } (use range for doing something a number of times)
+	
+Ownership
+	- Rusts most unique feature -> make memory safety guarantees without a garbage collector
+	- memory managed trough a system of ownership with a set of rules that the compiler checks at compile time -> no run-time costs
+	- addresses: minimize duplicate data on heap, cleaning up unused data on the heap
+	Rules
+		- Each value in Rust has a variable that's called its owner.
+		- There can be only one owner at a time.
+		- When the owner goes out of scope, the value will be dropped.
+	Variable Scope
+		- scope: range within a program for which an item is valid
+		- When variable s comes into scope, it is valid.
+		- It remains so until it goes out of scope.
+
+	Datatype String (heap-allocated)
+		- stores amount of text unknown to us at compile time 
+		- :: - operator for namespacing a function under a specific type
+		
+	Memory and Allocation
+		- for mutable, growable structures:
+			- Memory must be requested from the OS at runtime.
+			- We need a way of returning this memory to the OS when done with the data.
+				- Problems: freed too late -> waste memor, freed too early -> invalid var, done twice -> bug
+		- handled in Rust:
+			- memory automatically returned when var goes out of scope
+				-> Rust calls function Drop automatically when var goes out of scope
+		
+		e.g.
+		let s1 = String::from("hello");
+		let s2 = s2;
+		
+		-> s2 has a copy of the pointer, length and capacity
+		-> when s1 and s2 go out of scope -> both trying to clean the memory -> double free error
+			-> Rust's solution: s1 no longer valid -> not necessary to free it
+			-> called "move": s1 was moved to s2, i.e. not only pointer, length and capacity copied but also former variable invalidated
+			-> Rust never automatically creating "deep" copies of data
+				-> any automatic copying assumed inexpensive i.t.o. runtime performance
+		- for deep copy (heap data / shallow copy: stack data) -> method "clone"
+		
+		- types like integers: known size at compile time -> stored entirely on stack 
+			-> no difference between deep/shallow copy
+		    -> "Copy" trait: older variable still usable after assignment
+				- trait cannot be implemented if also "Drop" trait implemented
+			-> all scalar types
+	
+	Ownership and Functions
+		- passing a var to a function will move or copy, just like assignment
+		
+	Return values and scope
+		-> references
+		
+	Pattern for ownership of a variable:
+		 - assigning value to another var -> move
+		 - when var including heap data out of scope -> cleaned up by drop
+			unless data has been moved to be owned by another var
+	
+	References and Borrowing
+		- & operator: reference	
+			-> allow to refer to some value without taking ownership of it
+		- not owning it -> value it points to will not be dropped when reference goes out of scope
+		- signature of the function using & -> indicating that expecting a reference as a parameter
+			-> no need to return values in order to give back ownership
+		- borrowing: having references as function parameters 
+		- references: immutable by default
+		Mutable References
+		- give mut &s as argument, and declare &mut <T> in function signature as parameter type
+		  <- var that is referred to must be mutable as well
+		  -> restriction: only one mutable reference to a particular piece of data in a particular scope allowed 
+			-> prevents data races at compile time
+			data race:
+			- Two or more pointers access the same data at the same time.
+			- At least one of the pointers is being used to write to the data.
+			- There's no mechanism being used to synchronize access to the data.
+		- use curly brackets to create scopes -> allowing for multiple mutable references, just not simultaneous ones
+		- not possible to have mutable reference while having an immutable one
+		- multiple immutable references: ok
+		
+		Dangling References:
+		- guaranteed that references never be dangling pointers
+		- reference to some data -> ensured that data won't go out of scope until reference to the data does
+	
+	The Rules of References
+		- At any given time, you can have either but not both of:
+			- one mutable reference
+			- any number of immutable references.
+		- References must always be valid.
+
+Slices
+	- let you ref a contiguous sequence of elems in a collection rather than the whole collection
+	- String slice: reference to part of a String, e.g. s  = String... -> let hello = &s[0..5]
+		-> &var_name[starting_index.. ending_index] - former inclusive, latter exclusive
+		- &str: immutable reference
+		- string literals' type: &str -> that's why immutable
+		
+Summary
+	- concepts of ownership, borrowing and slices -> ensuring memory safety at compile time
+		
+Using Structs to structure related data
+	- field init shorthand - variables with same names as struct fields -> initialize fields with the values of the according variables
+	struct update syntax: initialize fields and then: ..user1 for taking the values of user1 for the rest of the fields of user2
+	- tuple structs without named fields to create different types
+		- definition: struct Struct_Name(<T>,<T>,...);
+	- Ownership of struct data:
+		- possible for structs to store references to data owned by something else but do so requires the use of lifetimes
+		- Lifetimes ensure that the data referenced by a struct is valid for as long as the struct is
+		
+	Methods and Syntax
+	...
+
+Enums and Pattern Matching
+	- defining a type by enumerating its possible values
+	- e.g. <Option>: value can either be something or nothing
+	- pattern matching with match expression -> different code on different values of an enum
+	- enum data can only be one of the variants of an enum type
+	- data can directly be associated to variants
+	- different types in enum, also with different associated data for each variant possible
+	- also possible to define methods on structs
+	
+The match Control Flow Operator
+	- compare a value against a series of patterns and then execute code based on which pattern matches
+	- patterns: literal values, variable names, wildcards,...
+		-> expressiveness of patterns + compiler checks making sure all possible cases handled
+	- difference to if: if needs boolean as condition, in match could be any type
+	- match arm: pattern and some code
+	- compares resulting value against pattern of each arm, in order
+	- code associated with each arm: expression -> resulting value of expression of the matching arm: return value for the entire match expression
+	- another feature of match arms: can bind to parts of the values that match the pattern -> extract values out of enum variants
+		-> add variable to the pattern that matches the values of the specific variant
+	- combining enums and match -> very useful in many situations, common pattern in Rust code
+		-> match against an enum, bind a variable to the data inside, execute code based on it
+		-> consistently a user fav, not common in all languages
+		-> like type-case
+	- matches in rust: exhaustive -> must exhaust every last possibility in order for the code to be valid
+		-> compiler recognizes when not exhausting all the poss matches
+	- _ placeholder -> like an else in type-case
+		- matches any value -> matches all the possible cases that aren't specified before if put as the last case
+		
+Control Flow with if let
+	- if + let -> handle values that match one pattern and ignore the rest
+	- if let ... else ... : else block -> same code as in match with _ case
+	
+Error Handling
+	- error categories: 
+		- recoverable: report problem to user and retry
+		- unrecoverable: symptoms of bugs
+	- instead of exceptions: value Result <T,E> for recoverable errors
+	- panic! macro for unrecoverable errors
+	
