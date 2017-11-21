@@ -1,0 +1,6 @@
+[package]
+name = "rustsort"
+version = "0.1.0"
+authors = ["John Deppe <deppe@ece.ubc.ca>"]
+
+[dependencies]
