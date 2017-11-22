@@ -17,10 +17,19 @@ impl Config {
 }
 
 pub fn run(config: Config) -> Result<(), Box<Error>>{
-    Ok(())
-}
     //read in file here, take info from Config struct
+    let mut f = File::open(config.filename).expect("file not found");
+
+    let mut contents = String::new();
+    f.read_to_string(&mut contents)
+        .expect("something went wrong reading the file");
+        
+    println!("With text:\n{}", contents);
+
     //then read line by line and collect lines in a vector
     //call vector.sort() if Strings have total ordering
     //"A mutable slice of elements with a total ordering has a sort method"
     // https://stackoverflow.com/questions/26836488/how-to-sort-a-vector-in-rust
+    Ok(())
+}
+    
