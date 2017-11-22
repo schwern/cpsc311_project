@@ -9,9 +9,12 @@ fn main() {
 
     println!("In file {}", config.filename);
 
-    run(config);
-}
+    if let Err(e) = run(config){
+        println!("Application error: {}", e);
 
+        process:exit(1);
+    }
+}
 
 fn parse_config(args: &[String]) -> Config {
     let filename = args[1].clone();
