@@ -24,7 +24,11 @@ pub fn run(config: Config) -> Result<(), Box<Error>>{
     f.read_to_string(&mut contents)
         .expect("something went wrong reading the file");
         
-    println!("With text:\n{}", contents);
+    println!("With text:");
+    
+    for line in contents.lines() {
+        println!("{}", line);
+    }
 
     //then read line by line and collect lines in a vector
     //call vector.sort() if Strings have total ordering
