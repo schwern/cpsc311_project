@@ -9,8 +9,6 @@ fn main() {
 
     let config = Config::new(&args);
 
-    println!("In file {}", config.filename);
-
     if let Err(e) = rustsort::run(config) {
         println!{"Application error: {}", e};
     }

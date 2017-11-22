@@ -23,17 +23,23 @@ pub fn run(config: Config) -> Result<(), Box<Error>>{
     let mut contents = String::new();
     f.read_to_string(&mut contents)
         .expect("something went wrong reading the file");
-        
-    println!("With text:");
     
-    for line in contents.lines() {
-        println!("{}", line);
-    }
-
+    let mut nodes = Vec::new();
+    
     //then read line by line and collect lines in a vector
+    for line in contents.lines() {
+        nodes.push(line);
+    }
+    
     //call vector.sort() if Strings have total ordering
     //"A mutable slice of elements with a total ordering has a sort method"
     // https://stackoverflow.com/questions/26836488/how-to-sort-a-vector-in-rust
+    nodes.sort();
+    
+    for node in nodes {
+        println!("{}", node)
+    }
+
     Ok(())
 }
     
