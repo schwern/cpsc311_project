@@ -26,6 +26,7 @@ Exit status:
 0 if no error occurred
 1 if invoked with -c or -C and the input is not sorted
 2 if an error occurred
+(> 1 : immanente Fehlerbedingungen)
 
 numeric-sort: comparison is exact, no rounding error
 Access to locale?
@@ -36,3 +37,12 @@ sort reads all input before opening output-file -> sort a file in place
 buffer sizes? -> size in units of 1024bytes, % or K 
 -- parallel=n : number of sorts run in parallel to n, by default: n set to the number of available processors
 
+wikipedia.de
+
+LC_ALL, LANG, LC_COLLATE, LC_NUMERIC : environment variables?
+
+Implements merge sort as sorting alg.
+
+case sensitive/case insensitive
+
+sort working line by line
