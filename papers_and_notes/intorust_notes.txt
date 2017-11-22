@@ -214,4 +214,3 @@ Safety
 			
 	Rule: no mutation during lifetime of borrow
 	Lifetime: span of code where reference is used
-			

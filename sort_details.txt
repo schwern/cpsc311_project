@@ -1,0 +1,38 @@
+options:
+- merge
+	- by sorting as group
+	- each input file individually sorted beforehand
+- check if sorted
+	- if not: diagnostic + first out of order line, exit with status 1
+	- otherwise: exit successfully
+	- at most 1 input file
+	
+	- already sorted -> exit successfully
+	- otherwise: exit(1)
+- sort
+	- sort lines of all the named files together and write the result to specified output
+
+all the LINES from given FILES or STDIN if none are given
+default: results to STDOUT, errror to STDERR
+all comparisons using the character collating seq specified by LC_COLLATE LOCALE
+final byte of an input file not a newline -> adding newline to line
+
+sort options: random.sort, human-numeric-sort, numeric-sort, month-sort, general-numeric-sort
+-o output file
+
+Reading of arguments and environment variables -> easy or not to implement in sort?
+
+Exit status:
+0 if no error occurred
+1 if invoked with -c or -C and the input is not sorted
+2 if an error occurred
+
+numeric-sort: comparison is exact, no rounding error
+Access to locale?
+
+random-sort: hashing input keys and then sorting hash values 
+
+sort reads all input before opening output-file -> sort a file in place
+buffer sizes? -> size in units of 1024bytes, % or K 
+-- parallel=n : number of sorts run in parallel to n, by default: n set to the number of available processors
+

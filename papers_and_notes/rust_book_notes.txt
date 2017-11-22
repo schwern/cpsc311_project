@@ -341,3 +341,265 @@ Error Handling
 	- instead of exceptions: value Result <T,E> for recoverable errors
 	- panic! macro for unrecoverable errors
 	
+
+split program in main.rs and lib.rs
+parsing arguments and call "run", error handling in main 
+library functions in run
+Error handling with returning Result type, Ok(return_value) for success, Err(message) for failure
+.unwrap_or_else() at function call to get value wrapped in Ok or to get Error message
+data that is related -> put in complex data structure with concrete names for easier maintenance + implement funtions for it
+if let (result not important)/unwrap_or_else (result can be used further) for error handling
+use statements -> import:
+	use std::error::Error;
+	use std::fs::File;
+	use std::io::prelude::*; 
+for error handling, working with IO and files
+modularity by splitting main and library -> testing easier
+lifetime parameter: which argument lifetime is connected to the lifetime of the return value
+-> connect argument with value if value takes some parts of the argument 
+	-> telling Rust that data returned by the function will live as long as the data passed into the search function in the argument
+	-> data referenced by a slice needs to be valid i.o. for the reference to be valid
+lines method -> iterator -> good for loop with iterator for running some code on each item in a collection
+refactoring each little bit
+TDD -> write test, write code to pass it, refactor
+
+environment variables
+functions like to_lower_case -> creating new data rather than referencing existing data
+field for environment variable in the Config struct
+env::var function -> pass name of the environment variable and get back Result
+is_err method -> check if error -> unset -> here: case_insensitive search, otherwise is_err returns false (because variable is set so gets back Ok-variant) -> here: case sensitive
+use std::env; -> features for dealing with env vars
+
+Writing Error Messages to Standard Error instead of Standard Output
+standard error -> for error messages
+eprintln! macro -> prints to the standard error stream
+
+Generic Types, Traits and Lifetimes
+generics: abstract stand-ins for concrete types or other properties
+	-> more flexible, less redundancy
+traits: way to define behavior in a generic way
+	-> combined with Generics -> constrain a generic type to those types that have a particular behavior
+lifetimes: kind of generic	-> information about how references are related to each other
+		-> allow us to borrow values in many situations and still have the compiler check that references will be valid
+		
+	Generic data types
+	- type parameter name in a function signature -> declare type parameter name in angle brackets between the name of the function and the parameter list
+		e.g. fn largest<T>(list: &[T]) -> T {...}
+	- generic type parameter in one or more of the struct's field e.g.
+		struct Point<T> {x:T, y:T,} -> x,y of same type
+		struct Point<U> {x:T, y:U,} -> x,y different type (but can be the same)
+	- enums -> can also hold generic data types in their variants
+		e.g. enum Option<T>{Some(T), None,} or enum Result<T,E>{Ok(T), Err(E),}
+	- in method definitions: impl<T> Point<T> {...}
+		-> declaring directly after impl: compiler knows there is a generic type rather than concrete
+		- other type parameters used than in struct -> go after fn because only relevant to function
+	Rust uses monomorphization: process of turning generic code into specific code with the concrete types that are actually filled in
+	
+	Traits: Defining Shared Behavior
+	- abstract over behavior that types can have in common
+	- behavior of a type = methods we can call on that type
+	- traits: way to group method signatures together -> define set of behaviors to accomplish some purpose
+	- declare trait with "trait keyword"
+	- inside trait: declare method signatures that describe the behaviors that types that implement this trait need to have
+	- each type implementing that trait -> provide own custom behavior for the body of the method
+	- implementing trait on type: similar to implementing methods
+		difference: after impl -> put trait name to be implemented, then say for and the name of type that we want to implement the trait for
+		e.g. impl Summarizable for NewsArticle {...}
+		restriction: implement a trait on a type as long as either the trait or the type are local to our crate 
+			-> not allowed to implement external traits on external types -> "orphan rule"
+	- default implementation -> default behavior for some or all of the methods in a trait	
+		-> implementing trait on particular type -> choose to keep or override each method's default behavior
+			- keep -> use default implementation: implement empty impl block or simply nothing
+			- override -> implement custom method
+		-> default implementations allowed to call other methods in the same trait
+		-> providing lot of useful functionality
+		- not possible to call default implementation from overriding implementation
+		
+	Trait bounds: traits used with generic type parameters -> constraining generic types
+		-> ensuring that type given that implements a particular trait and show corresponding behavior
+		e.g. pub fn notify<T: Summarizable>(item T){...}
+		- specifying multiple trait bounds with "+"
+		e.g. fn some_function<T: Display + Clone, U: Clone + Debug>(t: T, u: U) -> i32 {...}
+		- more readable with "where":
+		e.g. fn some_function<T, U>(t: T, u: U) -> i32
+				where T: Display + Clone,
+						U: Clone + Debug
+			{...}
+		- using trait bound with an impl block using generic type parameters -> conditionally implement methods only for types that implement the specified traits
+		- also conditionally implement a trait for any type that implements a trait
+		- blanket implementation: implementations of a trait on any type that satisfies the trait bounds
+		
+	Lifetimes: ensuring that references are valid as long as we need them to be
+		- lifetime: scope for which that reference is valid
+		- sometimes necessary to annotate relationships using generic lifetime parameters -> enrure the actual reference used at runtime will be valid
+		- main goal: prevent dangling references
+		- uninitialized pointers cannot be used
+		- borrow checker: compares scopes to determine that all borrows are valid
+		
+		Generic lifetimes in functions
+		e.g. fn first_word<'a>(s: &'a str) -> &'a str 
+		- generic lifetime parameter -> functions can accept references with any lifetime
+		 -> relate the lifetimes of multiple references to each other
+		- lifetime annotation: names of lifetime params must start with ', lowercase, short
+		&i32        // a reference
+		&'a i32     // a reference with an explicit lifetime
+		&'a mut i32 // a mutable reference with an explicit lifetime
+		two parameters with same lifetime annotation -> both live as long as the same generic lifetime
+			-> generic lifetime 'a will get the concrete lifetime = min(lifetimes of the two variables passed in as arguments)
+		generic lifetime parameters -> any values not adhering to this contract -> rejected by borrow checker
+		annotation of lifetimes only in function signature (params and return value)
+		returning a reference from a function -> lifetime param of return type needs to match lifetime param of one of the arguments
+		ocnnecting lifetimes of various arguments and return values of functions
+			-> enough information to allow memory-safe ops and disallow ops that would create dangling pointers or otherwise violate memory-safety
+			
+		Lifetime Annotations in Struct Definitions
+		- structs holding references <- lifetime annotation on every reference in the struct's definition
+		- declare lifetime param: struct ImportantExcerpt<'a>{...}
+		
+		Lifetime ellision rules
+		- input lifetimes: lifetimes on function or method parameter
+		- output lifetimes: lifetimes on return values
+		1) each param that is a reference gets its own param
+		2) There is exactly one input lifetime param -> lifetime assigned to all output lifetime param
+		3) THere are multiple lifetime params but one of them is &self or &mut self -> lifetime of self assigned to all output lifetime params
+		
+		Static Lifetime 'static
+		- entire duration of program
+		- e.g. all string literals have static lifetime
+		
+		
+Handling concurrency in Rust
+		- concurrent programming: different parts of a program executed independently
+		- parallel programming: different parts of a program executing at the same time
+		- Message passing concurrency: channels used to send messages between threads
+		- shared state concurrency: multiple threads have access to some piece of data
+		- Sync, Send traits 
+		
+		Using threads
+		- process: context in which the OS runs code
+		- thread: independent parts of the program that run simultaneously within the context of the program
+		- race conditions: thread accessing data or resources in inconsistent order, deadlocks where two threads both prevent each other from continuing, bugs only happening in certain situations
+		- OS APIs to create threads: 1:1, one OS thread per one language thread
+		- programming language provided threads (lightweight/green thread): M:N, M green threads per N OS threads
+		- std library of Rust: only 1:1 threading
+		
+		- Create new thread with "spawn" e.g.
+		thread::spawn(|| {
+        for i in 1..10 {
+            println!("hi number {} from the spawned thread!", i);
+        }
+		- waiting for all threads to finish using join handles
+		guarantee that the spawned thread will get to run at all <- saving the return value of thread::spawn which is a JoinHandle
+		
+		use std::thread;
+
+		fn main() {
+			let handle = thread::spawn(|| {
+				...
+			});
+
+			for i in 1..5 {
+				...
+			}
+
+			handle.join();
+		}
+		
+		- JoinHandle: owned value that can wait for a thread to finish -> done by join method
+		- calling join on the handle -> current thread will block until the thread that the handle represents terminates
+		- using move closures with Threads
+		- creating closures that capture values from their environment mostly used in the context of starting new threads
+		- i.o.t. use data in the spawned thread that comes from the main thread -> spawned threat's closure must capture the values it needs
+		- closure using variable -> closure capturing var and making it part of the closure's environment -> thread::spawn runs closure in new thread -> access var inside that new thread
+		- captuing something in closure's env. -> rust inferring how to capture it -> only reference needed -> borrow -> problem: don't know how long the spawned thread will run, so not knowing if the reference to var will always be valid!
+			-> use "move" keyword to force a closure to take ownership of the values it uses e.g.
+			let handle = thread::spawn(move || {
+			println!("Here's a vector: {:?}", v);
+    }		);
+		
+		Message Passing to transfer data between threads
+		- "Do not communicate by sharing memory, instead, share memory by communicating"
+		- channel: has two halves, a transmitter and a receiver
+			-> one part of code: call methods on the transmitter with the data we want to send
+			-> other part: check the receiving end for messages
+		- mpsc:channel function -> creates new channel
+			- return values: tuple with sending end and receiving end
+		- mpsc (multiple producer, single consumer): multiple sending ends of a channel producing values, only one receiver consuming those values
+		- put transmitter in closure of thread -> use send method -> takes value down the channel
+			- return Result type
+		- receiver (remained in main thread) -> useful methods:
+			- recv: receive - block execution until a value is sent down the channel, return Result<T,E>
+			- try_recv: not blocking, instead returning Result<T,E> immediately
+		- once value sent to another thread -> not available afterwards anymore since send takes ownership of its param, moves value -> value owned by receiver
+		- message passing ~= single ownership in Rust -> preventing data race
+		- sending multiple messages per iterator over some data -> send in each iteration -> treat receiver like iterator -> when channel closed -> iteration ends
+		- create multiple threads that all send values to the same receiver -> clone the transmitting half of the channel
+	
+	Shared State Concurrency
+	- mutex (mutual exlusion): concurrency primitve for sharing memory
+		- only allows one thread to access some data at any given time
+	- have to attempt to acquire the lock before using the data und unlock the data after use
+	API of mutex:
+		- Mutex::new(..) -> create mutex
+		- lock method -> acquire lock -> block until it's our turn to have the lock
+		- once acquired lock -> treat the return value as a mutable reference to the data inside
+		- Mutex<T>: smart pointer or rather call to lock returns smart pointer called MutexGuard
+			- implement Deref to point at our inner data
+			- Drop implementation for releasing the lock -> lock released when MutexGuard goes out of scope
+			- providing interior mutability
+	- Arc<T>: atomic reference counted type
+		- atomics working like primitive types but safe in concurrent situations
+		- wrap mutex in Arc<T> -> share ownership across multiple threads
+	- NOT prevented by Rust: reference cycles/deadlocks
+	
+	Extensible Concurrency with Sync and Send Traits
+	- marker traits -> no behavior to implement
+	- Send for indication Ownership may be transferred to another thread
+		- almost every type in Rust implements it except e.g. Rc<T>
+		- any type composed of Send types -> marked as Send automatically 
+	- Sync for indicating that a type is safe to have references to a value from multiple threads
+		i.e. for any type T, T is Sync if &T (a reference to T) is Send 
+		- primitive types: Sync, types composed entirely of Sync types automatically sync as well
+		- Implementing Send and Sync -> unsafe
+	
+Closure: Anonymous functions that can capture the environment
+		- closures in Rust: anonymous functions, save in a var or pass as arg to other functions
+		- create closure in one place and call in another
+		- allowed to capture values from the scope in which they are called
+		- enables to specify some code in one place in our program but then only execute code if actually needed the result
+		- define closure -> store closure in a variable (can move whole body of the function into closure)
+		- definition of closure: |param1,...,paramn| {...}
+		- closures in comparison to functions
+			- closures not requiring annotation of types of the params or the return value
+				- not used in exposed interface but rather anonymous functions (in variables)
+				- only relevant within narrow context ->automatic type inference possible
+				- first time types inferred for param and return value -> types locked into the closure
+		- struct containing closure and value of closures once evaluated
+			- value field of type Option<E>	
+				- before executing closures: None
+				- after executing closure: store result in Some variant
+		- each closure: own unique anonymous type
+		- all closures implement one of the traits Fn, FnMut or FnOnce
+		- field for closure of generic type T: Fn trait bound on on T specifying that T is a closure (signature given)
+		- can capture their environment and access variables from the scope in which they are defined
+			- three ways of capturing environment: taking ownership, borrowing immutably, borrowing mutably
+				- FnOnce: takes ownership of variables it captures from its enclosing scope
+				- Fn: borrows value from environment immutably
+				- FnMut: mutably borrows values
+				<- implicitly inferred by Rust based on how the closure uses the values from the environment
+				- force closure to take ownership -> move keyword before param list
+				
+		Iterators
+			- responsible for logic around iterating over each item in the seq and determining when the seq has finished
+			- in Rust: iterators - lazy
+			- Iterator trait:
+				- requires defining an Item type -> used in the return type for the next method
+				- next method: returns one item of the iterator at a time wrapped in Some, and when iteration over, returning None
+					- returns immutable references to the values in the iterated data 
+					-> iter method producing an iterator over immutable references
+				- consuming adaptors: methods calling the next method (using up the iterator)
+				
+				
+			
+		
+		

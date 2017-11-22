@@ -1,0 +1,26 @@
+Overview of topic
+	-> from proposal
+
+Clear overview of project topic	
+
+Context of project topic
+	- category of systems programming languages but implementing/ influenced by concepts of functional programming languages
+	- informal study of mozilla research team: half of the bug: use after free, out of range access, or related to integer overflow
+	 -> addressing memory safety issues by applying Rust
+	- most heavily inspired by the C and ML families of languages
+	- similarity to C: fine control over memory layout and predictable performance
+	- difference to C: Rust programs memory safe by default, only allowing unsafe operations designated blocks
+	- also providing safer environments for concurrency
+	- weaknesses of Rust in comparison to established programming languages: no/little IDE support, small ecosystem, high learning curve
+	
+
+ value/importance/impact of project topic
+ 
+ context of project topic
+ 
+ technical aspects of project topic
+ 
+ potential project
+ - rewriting sort
+ - first: basic utility
+ - one possible branch:
