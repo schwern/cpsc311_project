@@ -1,6 +1,8 @@
+extern crate rustsort;
+
 use std::env;
-use std::fs::File;
-use std::io::prelude::*;
+
+use rustsort::Config;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -9,29 +11,7 @@ fn main() {
 
     println!("In file {}", config.filename);
 
-    run(config);
-}
-
-<<<<<<< HEAD
-struct Config {
-    filename: String
-}
-
-impl Config {
-    fn new(args: &[String]) -> Config {
-        let filename = args[1].clone();
-        // better to move than clone... how?
-        // https://doc.rust-lang.org/book/second-edition/ch12-03-improving-error-handling-and-modularity.html#the-tradeoffs-of-using-clone\
-        
-        Config {filename}
+    if let Err(e) = rustsort::run(config) {
+        println!{"Application error: {}", e};
     }
-=======
-
-fn parse_config(args: &[String]) -> Config {
-    let filename = args[1].clone();
-    // better to move than clone... how?
-    // https://doc.rust-lang.org/book/second-edition/ch12-03-improving-error-handling-and-modularity.html#the-tradeoffs-of-using-clone
-
-    Config {filename}
->>>>>>> separated lib and main
 }
