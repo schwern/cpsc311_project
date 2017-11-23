@@ -1,0 +1,216 @@
+INTO_RUST()
+
+Why Rust? 
+
+systems programming - coding in an environment where you have limited resources and have to make the most out of it
+"hack without fear" - compiler got your back, mistakes that typically led to seg faults -> now: compilation errors
+-> new horizons since lets you write a program that might have been to risky in other languages
+"Safe Rust"
+Type system preventing most common mistakes in parallel programming
+Rayon -> library for parallel extensions
+can also do: processes with channels, mutexes, non-blocking data structures...
+cargo: build tool of choice
+
+Hello, World!
+
+Ownership first approach - makes Rust into Rust and distinguishes it from other languages
+fn keyword for functions
+main function -> where program starts
+macros : things that expand into a bunch of code, ! as signal that's a macro 
+e.g. println! -> placeholder possible
+let [type] name_variable : variable declaration, type optional (compiler can figure it out)
+
+fn greet(name: String) -> i32
+ - function definition with parameter list and return value
+ 
+String in Rust: referring to heap-allocated buffer
+"name" -> string literal - NOT a String
+ - use .to_string() or format!("name") (- can use placeholders in this one) -> allocates buffer and copies string into it
+ 
+ Ownership
+ 
+  - owning something -> can give it away -> new owner
+  - if someone wants to use the owned stuff -> have to ask the owner for permission -> owner = gate keeper
+  - or throw stuff it away
+ 
+ similar for data structures in Rust
+ - creating an instance of a data structure -> allocating resources -> ownership transferred to creator (the function in which it was created)
+ - for any resource that has been allocated -> there's always an owner!
+ - resource can be moved from owner to owner
+ - one of the owner -> drop resource -> resource get freed
+ - kind of manual memory management -> not done explicitly, just falling out of values and not using them
+ - parameter of some type in a function -> declaring that you would like to take ownership of an instance of such type
+ - ownership: unique access to and control of data
+ - current owner not using the data anymore (e.g. returns etc.) -> data gets dropped (freed) (destructor runs)
+ 
+ e.g. in Java:
+ void main(){
+	Vector name = ...;
+	helper(name);
+	helper(name); 
+ }
+ 
+ void helper(Vector name){...}
+ 
+ when giving that data to the helper function -> shared state, helper gets ACCESS/REFERENCE to data -> any changes helper making -> visible in main function when helper returning
+ everything shared implicitly -> everything entangled implicitly -> function could have changed data of another function -> source for bugs
+ when main returns - resources might still not be freed
+ even worse: when threading applied
+ "sharing-heavy language"
+ just can be determined when to free data at RUNTIME
+ unpredictable and dynamic nature of garbage collection
+ 
+e.g. in Rust:
+fn main(){
+	let name = format!("..."); -> main: owner of name
+	helper(name); -> ownership given away to helper
+	helper(name); -> error because main doesn't have ownership anymore
+	}
+	
+fn helper(name: String){
+	println!(...)
+}
+
+
+cloning (most of the time the wrong way but easier)
+ - clone(): function offered for many types
+ - makes deep copy and gives back fresh copy
+
+e.g. in Rust:
+fn main(){
+	let name = format!("..."); -> main: owner of name
+	helper(name.clone()); -> copy of resource: give away copy and keep the other for yourself, copy dropped after use
+	helper(name); -> ownership for original left -> give it to helper
+	}
+	
+fn helper(name: String){
+	println!(...)
+}
+
+
+
+Copy types:
+ - automatic clone
+ - everytime using variable - instead of giving away ownership -> automatically give copy
+ - e.g. Integer (copying for integers is free), floating point types
+ 
+ 
+Non-copyable: Values move from place to place (make one instance of it, there can't be another -> just can be moved and not copied)
+Clone: Run custom code to make a copy (in order to clone values -> you HAVE to RUN custom code to clone)
+Copy: type is implicitly copied when referenced
+
+fn helper(name: String) // takes ownership
+string.clone() // clone the string
+
+return from function -> leave off the semicolon -> no explicit "return" or other keyword needed
+
+let(adjective, word) = two_words() // function that returns pair of Strings; values from the string assigned to variables 
+twowords() -> (String, String)
+	- strings created in twowords -> owner: function
+	- put into pair -> owner: pair
+	- returned to calling function -> owner: calling function
+	
+match 
+ - like switch in C but more powerful
+ 
+Default in Rust:
+	local variable and all the memory it owns is going to be immutable unless otherwise stated
+	have to add keyword "mut"
+	compiler lets you know if declared a variable as mutable but don't actually use it that way
+	
+	
+Shared borrows
+ borrow the string by creating a reference
+ reference: also shared copytype
+ can make any number of references to the same string
+ once reference not used anymore + function that owns the data returns -> data dropped
+ shared == immutable (only readable not writable) or rather mutation only in controlled circumstances (e.g. lock)
+ both the callers and the callee have to agree about who owns what and who's borrowing what
+ (that's why there has to be created a reference to the data and handed over while ownership retained)
+ reference = value that can be shared; copy type
+ mutability: time-based thing, question of when it is mutable
+	e.g. variable declared as mutable -> mutable unless it has been borrowed
+	so if reference to mutable variable created -> errors when trying to mutate it
+	applying until r goes out of scope
+	e.g. if creating new scope (by {} blocks) -> borrow ends at closing block -> data mutable again
+ 
+ fn main(){
+	let name = format!("..."); -> main: owner of name
+	let r = &name; -> borrow string - create reference
+	helper(r); -> borrow data by giving reference
+	helper(r); -> can give same shared reference
+	}
+	
+fn helper(name: &String){ -> now expects a reference
+	println!(...) -> when helper returns, no data gets freed since helper not owning the string but rather the reference
+}
+
+
+string
+	data
+	len: amount of data actually used in buffer
+	capacity -> normally more space available than len, so things can be appended
+	
+&str: string slice
+	string slice: some subset of a string buffer, almost always sth you borrow from a string buffer
+	on side of owner: helper(&name[1..]);
+	-> reference into the string buffer (just skipping first letter) -> no allocation, no copying
+	just borrowed reference
+	
+	string slice
+		data
+		len
+	unlike other languages: no copying at runtime, instead just holding a reference to that data
+	useful for higher lvl abstractions when working with strings
+	line.split(' ') <- iterator over slices borrowed from line (here: whitespace separated substrings)
+	-> high-lvl code with low-lvl performance
+
+
+Mutable borrows: &mut T
+	fn main() {
+		let mut name = ...;
+		update(&mut name); -> lend the string mutably -> once a mutable reference to data created -> data cannot be used by owner anymore 
+		println!("{}", name);
+	}
+	
+	fn update(name: &mut String){ -> take a mutable reference to a string
+			name.push_str("..."); 
+	}
+	
+	&mut T -> changing data of that type -> making changes to the actual data that's owned by another function
+	
+	
+	Summary:
+	
+	Ownership: control all access, will free when done
+		name: String
+	shared reference: many readers, no writers
+		name: &String
+	Mutable reference: no other readers, one writers
+		name: &mut String
+		
+	mutable references while in scope -> kind of exclusive access to variables that are underneath them
+	so when mutable reference to variable name created and then name used in the same block -> error because name cannot access the data anymore (while reference is in scope)
+	
+	helper(&mut name) -> scope of reference just applying to function call -> can be repeated again and again
+	
+Safety
+	- ownership and borrowing -> allowing to have Rust safety without garbage collection
+	- dangers of mutation: dangling references, seg faults
+	
+	Rust solution
+		- compile-time read-write-lock:
+			creating a shared reference to X "read locks" X
+				- other readers ok
+				- no writers
+				- lock lasts until reference goes out of scope
+				
+			creating a mutable reference to X "writes locks" X
+				- no other readers of writers
+				- lock lasts until reference goes out of scope
+				
+			Never have a reader/writer at same time.
+			-> Ensuring safety in Rust
+			
+	Rule: no mutation during lifetime of borrow
+	Lifetime: span of code where reference is used
