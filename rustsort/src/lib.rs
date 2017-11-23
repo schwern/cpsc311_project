@@ -1,4 +1,3 @@
-use std::error::Error;
 use std::fs:: File;
 use std::io::prelude::*;
 use std::cmp::Ordering;
@@ -10,7 +9,7 @@ pub struct Config {
 
 impl Config {
     pub fn new(args: &[String]) -> Config {
-        if(args.len() > 1){
+        if args.len() > 1 {
             let filename = args[1].clone();
             Config {filename}
         } else {
