@@ -2,6 +2,7 @@ use std::fs:: File;
 use std::io::prelude::*;
 use std::cmp::Ordering;
 use std::io;
+use std::thread;
 
 pub struct Config {
     pub filename: String
@@ -45,6 +46,8 @@ impl<'a> Ord for KeyLinePair<'a>{
 }
 
 pub fn run(config: Config) -> Result<(), io::Error>{
+
+    show_threading();
     //read in file here, take info from Config struct
     let mut f = match File::open(config.filename){
 		Ok(file) => file,
@@ -72,4 +75,12 @@ pub fn run(config: Config) -> Result<(), io::Error>{
     }
 
     Ok(())
+}
+
+pub fn show_threading(){
+    let handle = thread::spawn(|| {
+        println!("Let's sort!")
+    });
+
+    handle.join();
 }
