@@ -1,15 +1,21 @@
 extern crate rustsort;
 
 use std::env;
+use std::io::{self, Write};
 
-use rustsort::Config;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
 
-    let config = Config::new(&args);
+    let config = rustsort::Config::new(&args);
 
-    if let Err(e) = rustsort::run(config) {
-        panic!("Application error: {}", e)
-    }
+    // let's try it this way:
+    // https://doc.rust-lang.org/std/process/fn.exit.html
+    ::std::process::exit(match rustsort::run(config) {
+        Ok(_) => 0,
+        Err(err) => {
+            writeln!(io::stderr(), "error: {:?}", err).unwrap();
+            2
+        }
+    });
 }
