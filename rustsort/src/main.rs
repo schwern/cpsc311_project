@@ -1,10 +1,17 @@
+#[macro_use]
+extern crate clap;
 extern crate rustsort;
+use clap::App;
 
 use std::env;
 use std::io::{self, Write};
 
 
 fn main() {
+    let matches = app_from_crate!()
+        .after_help("Written for CPSC 311 at University of British Columbia")
+        .get_matches();
+
     let args: Vec<String> = env::args().collect();
 
     let config = rustsort::Config::new(&args);

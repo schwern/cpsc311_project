@@ -1,6 +1,11 @@
 [package]
 name = "rustsort"
 version = "0.1.0"
-authors = ["John Deppe <deppe@ece.ubc.ca>"]
+authors = ["John Deppe <deppe@ece.ubc.ca>",
+           "Maike Basmer",
+           "Talha Khan"]
+description = "Write sorted concatenation of all FILE(s) to standard output."
+publish = false
 
 [dependencies]
+clap = "2"
