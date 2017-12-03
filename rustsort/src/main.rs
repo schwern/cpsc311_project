@@ -61,7 +61,7 @@ impl Config {
 pub struct KeyLinePair<'a>{
 // key refers to a string slice of the line
 	key: &'a str,
-	line: String
+//	line: String
 }
 
 impl<'a> PartialOrd for KeyLinePair<'a>{
@@ -83,8 +83,7 @@ impl<'a> Ord for KeyLinePair<'a>{
 }
 
 pub fn run(config: clap::ArgMatches) -> Result<(), io::Error>{
-    show_threading();
-    //read in file here, take info from Config struct
+    show_threading(); // FIXME
 
     let mut contents = String::new();
     let files = config.values_of_os("FILE").unwrap();
@@ -124,5 +123,5 @@ pub fn show_threading(){
         println!("Let's sort!")
     });
 
-    handle.join();
+    handle.join().unwrap(); // FIXME
 }
