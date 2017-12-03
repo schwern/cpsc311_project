@@ -2,4 +2,13 @@ taco aurrito
 tac  burrito
 taco burrito
 tac burrito
+&tac burrito
 tac aurrito
+taco& aurrito
+tac & burrito
+&tac &burrito
+tac &burrito
+tac &aurrito
+tac & burrito
+tac& burrito
+tac & aurrito
