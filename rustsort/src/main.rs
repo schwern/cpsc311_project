@@ -6,8 +6,6 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::cmp::Ordering;
 use std::io;
-use std::thread;
-
 
 fn main() {
     let matches = app_from_crate!()
@@ -24,18 +22,10 @@ fn main() {
             .multiple(true))
         .get_matches();
 
-    println!("{:?}", matches);
-
-    //let args: Vec<String> = env::args().collect();
-
-    //let rustsort::Config::new(&args);
-
-    // let's try it this way:
-    // https://doc.rust-lang.org/std/process/fn.exit.html
     ::std::process::exit(match run(matches) {
         Ok(_) => 0,
         Err(err) => {
-            writeln!(io::stderr(), "error: {:?}", err).unwrap();
+            eprintln!("error: {:#?}", err);
             2
         }
     });
@@ -83,7 +73,6 @@ impl<'a> Ord for KeyLinePair<'a>{
 }
 
 pub fn run(config: clap::ArgMatches) -> Result<(), io::Error>{
-    show_threading(); // FIXME
 
     let mut contents = String::new();
     let files = config.values_of_os("FILE").unwrap();
@@ -116,12 +105,4 @@ pub fn run(config: clap::ArgMatches) -> Result<(), io::Error>{
     };
 
     Ok(())
-}
-
-pub fn show_threading(){
-    let handle = thread::spawn(|| {
-        println!("Let's sort!")
-    });
-
-    handle.join().unwrap(); // FIXME
 }
