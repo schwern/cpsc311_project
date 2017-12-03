@@ -31,47 +31,6 @@ fn main() {
     });
 }
 
-pub struct Config {
-    pub filename: String
-}
-
-impl Config {
-    pub fn new(args: &[String]) -> Config {
-        if args.len() > 1 {
-            let filename = args[1].clone();
-            Config {filename}
-        } else {
-            panic!("Not enough arguments given")
-        }
-
-    }
-}
-
-#[derive(Eq)]
-pub struct KeyLinePair<'a>{
-// key refers to a string slice of the line
-	key: &'a str,
-//	line: String
-}
-
-impl<'a> PartialOrd for KeyLinePair<'a>{
-    fn partial_cmp(&self, other: &KeyLinePair) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
-impl<'a> PartialEq for KeyLinePair<'a>{
-    fn eq(&self, other: &KeyLinePair) -> bool {
-        self.key == other.key
-    }
-}
-
-impl<'a> Ord for KeyLinePair<'a>{
- fn cmp(&self, other: &KeyLinePair) -> Ordering {
-        self.key.cmp(&other.key)
-    }
-}
-
 pub fn run(config: clap::ArgMatches) -> Result<(), io::Error>{
 
     let mut contents = String::new();
