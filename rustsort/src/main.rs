@@ -43,7 +43,10 @@ pub fn run(config: clap::ArgMatches) -> Result<(), io::Error>{
 
         let reader = BufReader::new(f);
         for line in reader.lines() {
-            nodes.push(line.unwrap());
+            match line {
+                Ok(text) => nodes.push(text),
+                Err(e) => return Err(e),
+            };
         };
     }
 
