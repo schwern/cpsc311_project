@@ -4,8 +4,8 @@ extern crate clap;
 use clap::{Arg, AppSettings};
 use std::fs::File;
 use std::io::prelude::*;
-use std::cmp::Ordering;
 use std::io;
+use std::io::BufReader;
 
 fn main() {
     let matches = app_from_crate!()
@@ -32,31 +32,21 @@ fn main() {
 }
 
 pub fn run(config: clap::ArgMatches) -> Result<(), io::Error>{
-
-    let mut contents = String::new();
+    let mut nodes = Vec::new();
     let files = config.values_of_os("FILE").unwrap();
 
     for file in files {
-        let mut f = match File::open(file){
+        let f = match File::open(file){
     		Ok(f) => f,
     		Err(e) => return Err(e),
     	};
 
-    f.read_to_string(&mut contents)
-        .expect("something went wrong reading the file");
+        let reader = BufReader::new(f);
+        for line in reader.lines() {
+            nodes.push(line.unwrap());
+        };
     }
 
-
-    let mut nodes = Vec::new();
-
-    //then read line by line and collect lines in a vector
-    for line in contents.lines() {
-        nodes.push(line);
-    };
-
-    //call vector.sort() if Strings have total ordering
-    //"A mutable slice of elements with a total ordering has a sort method"
-    // https://stackoverflow.com/questions/26836488/how-to-sort-a-vector-in-rust
     nodes.sort();
 
     for node in nodes {
