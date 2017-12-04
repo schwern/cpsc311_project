@@ -21,9 +21,20 @@ fn main() {
             .help("sort via a key; KEYDEF gives location and type"))
             // TODO .validator()
             // https://github.com/kbknapp/clap-rs/blob/master/examples/15_custom_validator.rs
+        .arg(Arg::with_name("env_LANG")
+            .long("collate")
+            .hidden(true)
+            .help("used to hold LANG from environment")
+            .env("LANG"))
         .arg(Arg::with_name("FILE")
             .multiple(true))
         .get_matches();
+
+    // this unsafe call to libc makes sure we use the correct strcoll()
+    unsafe {
+        let emptystring = CString::new("").unwrap();
+        libc::setlocale(libc::LC_ALL, emptystring.as_ptr());
+    }
 
     ::std::process::exit(match run(matches) {
         Ok(_) => 0,
@@ -35,6 +46,10 @@ fn main() {
 }
 
 fn run(config: clap::ArgMatches) -> Result<(), io::Error>{
+
+    let lang = config.value_of("env_LANG").unwrap_or("");
+    //println!("lang is: {}", lang);
+
     let mut nodes = Vec::new();
     let files = config.values_of_os("FILE").unwrap();
 
@@ -75,7 +90,8 @@ impl Ord for MyString {
         let &MyString(ref s2_rusty) = other;
         let s1 = CString::new(s1_rusty.as_bytes()).unwrap();
         let s2 = CString::new(s2_rusty.as_bytes()).unwrap();
-        // pub unsafe extern "C" fn strcoll(cs: *const c_char, ct: *const c_char) -> c_int
+// the above gyrations are for turning our Rust strings into null-terminated
+// C strings that can safely interact with the libc function below
         let result = unsafe {
             libc::strcoll(s1.as_ptr(), s2.as_ptr())
         };
