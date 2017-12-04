@@ -1,7 +1,6 @@
 #[macro_use]
 extern crate clap;
 extern crate libc;
-use libc::strcoll;
 
 use clap::{Arg, AppSettings};
 use std::fs::File;
@@ -9,6 +8,7 @@ use std::io::prelude::*;
 use std::io;
 use std::io::BufReader;
 use std::cmp::Ordering;
+use std::ffi::CString;
 
 fn main() {
     let matches = app_from_crate!()
@@ -71,7 +71,19 @@ struct MyString(
 
 impl Ord for MyString {
     fn cmp(&self, other: &Self) -> Ordering {
-        Ordering::Equal // FIXME use libc::strcoll() to decide this
+        let &MyString(ref s1_rusty) = self;
+        let &MyString(ref s2_rusty) = other;
+        let s1 = CString::new(s1_rusty.as_bytes()).unwrap();
+        let s2 = CString::new(s2_rusty.as_bytes()).unwrap();
+        // pub unsafe extern "C" fn strcoll(cs: *const c_char, ct: *const c_char) -> c_int
+        let result = unsafe {
+            libc::strcoll(s1.as_ptr(), s2.as_ptr())
+        };
+        match result {
+            _ if result > 0 => Ordering::Greater,
+            _ if result < 0 => Ordering::Less,
+            _ => Ordering::Equal,
+        }
     }
 }
 
