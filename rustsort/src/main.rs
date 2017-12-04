@@ -6,9 +6,11 @@ use clap::{Arg, AppSettings};
 use std::fs::File;
 use std::io::prelude::*;
 use std::io;
+use std::io::{Error,ErrorKind};
 use std::io::BufReader;
 use std::cmp::Ordering;
 use std::ffi::CString;
+use std::collections::VecDeque;
 
 fn main() {
     let matches = app_from_crate!()
@@ -36,7 +38,7 @@ fn main() {
         libc::setlocale(libc::LC_ALL, emptystring.as_ptr());
     }
 
-    ::std::process::exit(match run(matches) {
+    ::std::process::exit(match merge(matches) {
         Ok(_) => 0,
         Err(err) => {
             eprintln!("error: {:#?}", err);
@@ -108,3 +110,69 @@ impl PartialOrd for MyString {
         Some(self.cmp(other))
     }
 }
+
+fn merge(config: clap::ArgMatches) -> Result<(), io::Error>{
+    let mut nodes: VecDeque<MyString> = VecDeque::new();
+    let mut pieces = VecDeque::new();
+    let files = config.values_of_os("FILE").unwrap();
+
+    for file in files {
+        let f = match File::open(file){
+    		Ok(f) => f,
+    		Err(e) => return Err(e),
+    	};
+
+        let reader = BufReader::new(f);
+        for line in reader.lines() {
+            match line {
+                // use MyString to be able to use it's Ord
+                Ok(text) => pieces.push_back(MyString(text)),
+                Err(e) => return Err(e),
+            };
+        };
+
+        nodes = match actual_merge(&mut nodes, &mut pieces){
+           Ok(v) => v,
+           Err(e) => return Err(e),
+       };
+    };
+
+    for node in nodes{
+        let MyString(line) = node;
+        println!("{}", line);
+    }
+
+    Ok(())
+
+}
+
+fn actual_merge(acc: &mut VecDeque<MyString>, file2: &mut VecDeque<MyString>) -> Result<VecDeque<MyString>, io::Error>{
+    let mut result = VecDeque::new();
+    while !(acc.is_empty() || file2.is_empty()) {
+        let head1 = match acc.pop_front() {
+            Some(h) => h,
+            None => return Err(Error::new(ErrorKind::UnexpectedEof, "unexpected emptiness")),
+        };
+
+        let head2 = match file2.pop_front() {
+            Some(h) => h,
+            None => return Err(Error::new(ErrorKind::UnexpectedEof, "unexpected emptiness")),
+        };
+
+        if head1 <= head2 {
+           result.push_back(head1);
+           file2.push_front(head2);
+       } else {
+           result.push_back(head2);
+           acc.push_front(head1);
+    };
+
+  }
+    if ! acc.is_empty(){
+      result.append(acc);
+    } else if !file2.is_empty(){
+      result.append(file2);
+    }
+
+  Ok(result)
+ }
