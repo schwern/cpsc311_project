@@ -28,6 +28,10 @@ fn main() {
             .hidden(true)
             .help("used to hold LANG from environment")
             .env("LANG"))
+        .arg(Arg::with_name("MERGE")
+            .short("m")
+            .long("merge")
+            .help("merge already sorted files"))
         .arg(Arg::with_name("FILE")
             .multiple(true))
         .get_matches();
@@ -38,13 +42,23 @@ fn main() {
         libc::setlocale(libc::LC_ALL, emptystring.as_ptr());
     }
 
-    ::std::process::exit(match merge(matches) {
-        Ok(_) => 0,
-        Err(err) => {
-            eprintln!("error: {:#?}", err);
-            2
-        }
-    });
+    if  matches.is_present("MERGE") {
+        ::std::process::exit(match merge(matches) {
+            Ok(_) => 0,
+            Err(err) => {
+                eprintln!("error: {:#?}", err);
+                2
+            }
+        });
+    } else {
+        ::std::process::exit(match run(matches) {
+            Ok(_) => 0,
+            Err(err) => {
+                eprintln!("error: {:#?}", err);
+                2
+            }
+        });
+    };
 }
 
 fn run(config: clap::ArgMatches) -> Result<(), io::Error>{
@@ -81,35 +95,6 @@ fn run(config: clap::ArgMatches) -> Result<(), io::Error>{
     Ok(())
 }
 
-#[derive(Eq, PartialEq)]
-struct MyString(
-    String
-);
-
-impl Ord for MyString {
-    fn cmp(&self, other: &Self) -> Ordering {
-        let &MyString(ref s1_rusty) = self;
-        let &MyString(ref s2_rusty) = other;
-        let s1 = CString::new(s1_rusty.as_bytes()).unwrap();
-        let s2 = CString::new(s2_rusty.as_bytes()).unwrap();
-// the above gyrations are for turning our Rust strings into null-terminated
-// C strings that can safely interact with the libc function below
-        let result = unsafe {
-            libc::strcoll(s1.as_ptr(), s2.as_ptr())
-        };
-        match result {
-            _ if result > 0 => Ordering::Greater,
-            _ if result < 0 => Ordering::Less,
-            _ => Ordering::Equal,
-        }
-    }
-}
-
-impl PartialOrd for MyString {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
-}
 
 fn merge(config: clap::ArgMatches) -> Result<(), io::Error>{
     let mut nodes: VecDeque<MyString> = VecDeque::new();
@@ -176,3 +161,34 @@ fn actual_merge(acc: &mut VecDeque<MyString>, file2: &mut VecDeque<MyString>) ->
 
   Ok(result)
  }
+
+
+#[derive(Eq, PartialEq)]
+struct MyString(
+    String
+);
+
+impl Ord for MyString {
+    fn cmp(&self, other: &Self) -> Ordering {
+        let &MyString(ref s1_rusty) = self;
+        let &MyString(ref s2_rusty) = other;
+        let s1 = CString::new(s1_rusty.as_bytes()).unwrap();
+        let s2 = CString::new(s2_rusty.as_bytes()).unwrap();
+// the above gyrations are for turning our Rust strings into null-terminated
+// C strings that can safely interact with the libc function below
+        let result = unsafe {
+            libc::strcoll(s1.as_ptr(), s2.as_ptr())
+        };
+        match result {
+            _ if result > 0 => Ordering::Greater,
+            _ if result < 0 => Ordering::Less,
+            _ => Ordering::Equal,
+        }
+    }
+}
+
+impl PartialOrd for MyString {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
