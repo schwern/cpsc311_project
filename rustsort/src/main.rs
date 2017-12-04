@@ -1,11 +1,14 @@
 #[macro_use]
 extern crate clap;
+extern crate libc;
+use libc::strcoll;
 
 use clap::{Arg, AppSettings};
 use std::fs::File;
 use std::io::prelude::*;
 use std::io;
 use std::io::BufReader;
+use std::cmp::Ordering;
 
 fn main() {
     let matches = app_from_crate!()
@@ -31,7 +34,7 @@ fn main() {
     });
 }
 
-pub fn run(config: clap::ArgMatches) -> Result<(), io::Error>{
+fn run(config: clap::ArgMatches) -> Result<(), io::Error>{
     let mut nodes = Vec::new();
     let files = config.values_of_os("FILE").unwrap();
 
@@ -44,7 +47,8 @@ pub fn run(config: clap::ArgMatches) -> Result<(), io::Error>{
         let reader = BufReader::new(f);
         for line in reader.lines() {
             match line {
-                Ok(text) => nodes.push(text),
+                // use MyString to be able to use it's Ord
+                Ok(text) => nodes.push(MyString(text)),
                 Err(e) => return Err(e),
             };
         };
@@ -53,8 +57,26 @@ pub fn run(config: clap::ArgMatches) -> Result<(), io::Error>{
     nodes.sort();
 
     for node in nodes {
-        println!("{}", node)
+        let MyString(line) = node;
+        println!("{}", line)
     };
 
     Ok(())
+}
+
+#[derive(Eq, PartialEq)]
+struct MyString(
+    String
+);
+
+impl Ord for MyString {
+    fn cmp(&self, other: &Self) -> Ordering {
+        Ordering::Equal // FIXME use libc::strcoll() to decide this
+    }
+}
+
+impl PartialOrd for MyString {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
 }
