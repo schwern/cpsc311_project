@@ -12,6 +12,46 @@ use std::cmp::Ordering;
 use std::ffi::CString;
 use std::collections::VecDeque;
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_actual_merge_empty_left() {
+        let mut a : VecDeque<MyString> = vec![].into_iter().collect();
+        let mut b : VecDeque<MyString> = vec!["zz", "qq", "aa", "rr"]
+            .into_iter()
+            .map( |x| MyString(String::from(x)) )
+            .collect();
+        let want : VecDeque<MyString> = vec!["aa", "qq", "rr", "zz"]
+            .into_iter()
+            .map( |x| MyString(String::from(x)) )
+            .collect();
+
+        let result = actual_merge(&mut a, &mut b).unwrap();
+        assert_eq!( result, want );
+    }
+    
+    #[test]
+    fn test_actual_merge_both_full() {
+        let mut a : VecDeque<MyString> = vec!["bb", "dd", "gg", "ee"]
+            .into_iter()
+            .map( |x| MyString(String::from(x)) )
+            .collect();
+        let mut b : VecDeque<MyString> = vec!["zz", "qq", "aa", "rr"]
+            .into_iter()
+            .map( |x| MyString(String::from(x)) )
+            .collect();
+        let want : VecDeque<MyString> = vec!["aa", "bb", "dd", "ee", "gg", "qq", "rr", "zz"]
+            .into_iter()
+            .map( |x| MyString(String::from(x)) )
+            .collect();
+
+        let result = actual_merge(&mut a, &mut b).unwrap();
+        assert_eq!( result, want );
+    }
+}
+
 fn main() {
     let matches = app_from_crate!()
         .after_help("Written for CPSC 311 at University of British Columbia")
@@ -159,7 +199,7 @@ fn actual_merge(acc: &mut VecDeque<MyString>, file2: &mut VecDeque<MyString>) ->
  }
 
 
-#[derive(Eq, PartialEq)]
+#[derive(Eq, PartialEq, Debug)]
 struct MyString(
     String
 );
