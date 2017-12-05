@@ -14,6 +14,7 @@ fn main() {
     let matches = app_from_crate!()
         .after_help("Written for CPSC 311 at University of British Columbia")
         .setting(AppSettings::UnifiedHelpMessage)
+/*
         .arg(Arg::with_name("KEYDEF")
             .short("k")
             .long("key")
@@ -21,23 +22,28 @@ fn main() {
             .help("sort via a key; KEYDEF gives location and type"))
             // TODO .validator()
             // https://github.com/kbknapp/clap-rs/blob/master/examples/15_custom_validator.rs
-        .arg(Arg::with_name("env_LANG")
-            .long("collate")
-            .hidden(true)
-            .help("used to hold LANG from environment")
-            .env("LANG"))
+*/
+        .arg(Arg::with_name("MERGE")
+            .short("m")
+            .long("merge")
+            .help("merge already sorted files; do not sort"))
         .arg(Arg::with_name("FILE")
             .multiple(true))
         .get_matches();
 
-    // this unsafe call to libc makes sure we use the correct strcoll()
-    unsafe {
+    unsafe { // this unsafe call to libc makes sure we use the correct strcoll()
         let emptystring = CString::new("").unwrap();
         libc::setlocale(libc::LC_ALL, emptystring.as_ptr());
     }
 
     ::std::process::exit(match run(matches) {
         Ok(_) => 0,
+/*        // POSIX requires that sort return 1 IFF invoked with -c or -C and the
+        // input is not properly sorted.
+        Err(err) => if err == {
+            eprintln!("error: {:#?}", err);
+            1
+        }*/
         Err(err) => {
             eprintln!("error: {:#?}", err);
             2
@@ -46,40 +52,74 @@ fn main() {
 }
 
 fn run(config: clap::ArgMatches) -> Result<(), io::Error>{
-
-    let lang = config.value_of("env_LANG").unwrap_or("");
-    //println!("lang is: {}", lang);
-
-    let mut nodes = Vec::new();
     let files = config.values_of_os("FILE").unwrap();
+    let mut texts: Vec<Vec<MyString>> = Vec::new();
 
     for file in files {
-        let f = match File::open(file){
-    		Ok(f) => f,
-    		Err(e) => return Err(e),
-    	};
+        let f = File::open(file)?;
 
+        let mut text = Vec::new();
         let reader = BufReader::new(f);
         for line in reader.lines() {
             match line {
                 // use MyString to be able to use it's Ord
-                Ok(text) => nodes.push(MyString(text)),
+                Ok(l) => text.push(MyString(l)),
                 Err(e) => return Err(e),
             };
         };
+        texts.push(text);
     }
 
-    nodes.sort();
+    if !config.is_present("MERGE") {
+        for text in &mut texts {
+            text.sort();
+        }
+    }
 
-    for node in nodes {
-        let MyString(line) = node;
-        println!("{}", line)
+    // if there's more than one text, merge them
+    while texts.len() > 1 {
+        // FIXME stacks all text into one Vec, whoops
+        let text1 = texts.pop().unwrap();
+        let text2 = texts.pop().unwrap();
+        let mut t1 = text1.into_iter();
+        let mut t2 = text2.into_iter();
+        let mut text3: Vec<MyString> = Vec::new();
+        loop {
+            match(t1.next(), t2.next()) {
+                (Some(s1), Some(s2)) => {
+                    if s1 > s2  {
+                        text3.push(s2);
+                        t2.next();
+                    } else {
+                        text3.push(s1);
+                        t1.next();
+                    }
+                },
+                (None, Some(s2)) => {
+                    text3.push(s2);
+                    t2.next();
+                },
+                (Some(s1), None) =>  {
+                    text3.push(s1);
+                    t1.next();
+                },
+                (None, None) => break,
+            }
+        }
+        texts.push(text3);
+    }
+
+    for text in texts {
+        for node in text {
+            let MyString(line) = node;
+            println!("{}", line);
+        }
     };
 
     Ok(())
 }
 
-#[derive(Eq, PartialEq)]
+#[derive(Eq, PartialEq, Debug)]
 struct MyString(
     String
 );
