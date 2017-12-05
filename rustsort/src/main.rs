@@ -6,7 +6,6 @@ use clap::{Arg, AppSettings};
 use std::fs::File;
 use std::io::prelude::*;
 use std::io;
-use std::io::{Error,ErrorKind};
 use std::io::BufReader;
 use std::cmp::Ordering;
 use std::ffi::CString;
@@ -19,7 +18,7 @@ mod tests {
     #[test]
     fn test_actual_merge_empty_left() {
         let mut a : VecDeque<MyString> = vec![].into_iter().collect();
-        let mut b : VecDeque<MyString> = vec!["zz", "qq", "aa", "rr"]
+        let mut b : VecDeque<MyString> = vec!["aa", "qq", "rr", "zz"]
             .into_iter()
             .map( |x| MyString(String::from(x)) )
             .collect();
@@ -28,26 +27,26 @@ mod tests {
             .map( |x| MyString(String::from(x)) )
             .collect();
 
-        let result = actual_merge(&mut a, &mut b).unwrap();
+        let result = actual_merge(&mut a, &mut b);
         assert_eq!( result, want );
     }
     
     #[test]
     fn test_actual_merge_both_full() {
-        let mut a : VecDeque<MyString> = vec!["bb", "dd", "gg", "ee"]
+        let mut a : VecDeque<MyString> = vec!["bb", "dd", "ee"]
             .into_iter()
             .map( |x| MyString(String::from(x)) )
             .collect();
-        let mut b : VecDeque<MyString> = vec!["zz", "qq", "aa", "rr"]
+        let mut b : VecDeque<MyString> = vec!["aa", "qq", "zz"]
             .into_iter()
             .map( |x| MyString(String::from(x)) )
             .collect();
-        let want : VecDeque<MyString> = vec!["aa", "bb", "dd", "ee", "gg", "qq", "rr", "zz"]
+        let want : VecDeque<MyString> = vec!["aa", "bb", "dd", "ee", "qq", "zz"]
             .into_iter()
             .map( |x| MyString(String::from(x)) )
             .collect();
 
-        let result = actual_merge(&mut a, &mut b).unwrap();
+        let result = actual_merge(&mut a, &mut b);
         assert_eq!( result, want );
     }
 }
@@ -152,10 +151,7 @@ fn merge(files: clap::OsValues) -> Result<(), io::Error>{
             };
         };
 
-        nodes = match actual_merge(&mut nodes, &mut pieces){
-           Ok(v) => v,
-           Err(e) => return Err(e),
-       };
+        nodes = actual_merge(&mut nodes, &mut pieces);
     };
 
     for node in nodes{
@@ -167,37 +163,25 @@ fn merge(files: clap::OsValues) -> Result<(), io::Error>{
 
 }
 
-fn actual_merge(acc: &mut VecDeque<MyString>, file2: &mut VecDeque<MyString>) -> Result<VecDeque<MyString>, io::Error>{
+fn actual_merge(left: &mut VecDeque<MyString>, right: &mut VecDeque<MyString>) -> VecDeque<MyString> {
     let mut result = VecDeque::new();
-    while !(acc.is_empty() || file2.is_empty()) {
-        let head1 = match acc.pop_front() {
-            Some(h) => h,
-            None => return Err(Error::new(ErrorKind::UnexpectedEof, "unexpected emptiness")),
-        };
-
-        let head2 = match file2.pop_front() {
-            Some(h) => h,
-            None => return Err(Error::new(ErrorKind::UnexpectedEof, "unexpected emptiness")),
-        };
-
-        if head1 <= head2 {
-           result.push_back(head1);
-           file2.push_front(head2);
-       } else {
-           result.push_back(head2);
-           acc.push_front(head1);
-    };
-
-  }
-    if ! acc.is_empty(){
-      result.append(acc);
-    } else if !file2.is_empty(){
-      result.append(file2);
+    while !(left.is_empty() || right.is_empty()) {
+        if left.get(0) <= right.get(0) {
+            result.push_back(left.pop_front().unwrap());
+        } else {
+            result.push_back(right.pop_front().unwrap());
+        }
     }
-
-  Ok(result)
- }
-
+    
+    if ! left.is_empty(){
+        result.append(left);
+    }
+    else if !right.is_empty(){
+        result.append(right);
+    }
+    
+    result
+}
 
 #[derive(Eq, PartialEq, Debug)]
 struct MyString(
