@@ -42,8 +42,10 @@ fn main() {
         libc::setlocale(libc::LC_ALL, emptystring.as_ptr());
     }
 
+    let files = matches.values_of_os("FILE").unwrap();
+
     if  matches.is_present("MERGE") {
-        ::std::process::exit(match merge(matches) {
+        ::std::process::exit(match merge(files) {
             Ok(_) => 0,
             Err(err) => {
                 eprintln!("error: {:#?}", err);
@@ -51,7 +53,7 @@ fn main() {
             }
         });
     } else {
-        ::std::process::exit(match run(matches) {
+        ::std::process::exit(match run(files) {
             Ok(_) => 0,
             Err(err) => {
                 eprintln!("error: {:#?}", err);
@@ -61,13 +63,8 @@ fn main() {
     };
 }
 
-fn run(config: clap::ArgMatches) -> Result<(), io::Error>{
-
-    let lang = config.value_of("env_LANG").unwrap_or("");
-    //println!("lang is: {}", lang);
-
+fn run(files: clap::OsValues) -> Result<(), io::Error>{
     let mut nodes = Vec::new();
-    let files = config.values_of_os("FILE").unwrap();
 
     for file in files {
         let f = match File::open(file){
@@ -96,10 +93,9 @@ fn run(config: clap::ArgMatches) -> Result<(), io::Error>{
 }
 
 
-fn merge(config: clap::ArgMatches) -> Result<(), io::Error>{
+fn merge(files: clap::OsValues) -> Result<(), io::Error>{
     let mut nodes: VecDeque<MyString> = VecDeque::new();
     let mut pieces = VecDeque::new();
-    let files = config.values_of_os("FILE").unwrap();
 
     for file in files {
         let f = match File::open(file){
